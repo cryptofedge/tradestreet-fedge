@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "TradeStreet",
+    "slug": "tradestreet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#080808",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#080808"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.eclatuniverse.tradestreet",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#080808"
+      },
+      "package": "com.eclatuniverse.tradestreet",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "fedge",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo-google-fonts/ibm-plex-mono/IBMPlexMono_300Light.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-mono/IBMPlexMono_400Regular.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-mono/IBMPlexMono_500Medium.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-mono/IBMPlexMono_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-mono/IBMPlexMono_700Bold.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-sans/IBMPlexSans_300Light.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-sans/IBMPlexSans_400Regular.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-sans/IBMPlexSans_500Medium.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-sans/IBMPlexSans_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/ibm-plex-sans/IBMPlexSans_700Bold.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FF6200"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "tradestreet-fedge2"
+      }
+    }
+  }
+}
