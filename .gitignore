@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.expo/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# JWT Keys (never commit these)
+keys/
+*.pem
+*.key
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+
+# Turbo
+.turbo/
+
+# React Native
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.orig.*
+android/
+ios/
+!apps/mobile/assets/
+
+# Expo
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+
+# TypeScript
+*.d.ts.map

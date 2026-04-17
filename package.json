@@ -1,0 +1,29 @@
+{
+  "name": "tradestreet",
+  "version": "2.0.1",
+  "private": true,
+  "description": "FEDGE 2.O — TradeStreet by Eclat Universe",
+  "author": "Rafael Fellito Rodriguez Jr. <fellito@eclatuniverse.com>",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:migrate": "pnpm --filter @tradestreet/api db:migrate",
+    "db:seed": "pnpm --filter @tradestreet/api db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "prettier": "^3.2.0",
+    "eslint": "^9.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
