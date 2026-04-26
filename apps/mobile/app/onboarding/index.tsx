@@ -5,7 +5,7 @@
 
 import { useState, useRef } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity,
   Animated, Dimensions, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -15,14 +15,14 @@ import type { Platform } from '@tradestreet/types';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const PLATFORMS: { id: Platform; name: string; icon: string; available: boolean }[] = [
-  { id: 'alpaca',    name: 'Alpaca',    icon: '🦙', available: true  },
-  { id: 'robinhood', name: 'Robinhood', icon: '🏹', available: false },
-  { id: 'webull',    name: 'Webull',    icon: '🐂', available: false },
-  { id: 'schwab',    name: 'Schwab',    icon: '🏦', available: false },
-  { id: 'ibkr',      name: 'IBKR',      icon: '📈', available: false },
-  { id: 'coinbase',  name: 'Coinbase',  icon: '🔵', available: false },
-  { id: 'kraken',    name: 'Kraken',    icon: '🐙', available: false },
+const PLATFORMS: { id: Platform; name: string; icon: string }[] = [
+  { id: 'alpaca',    name: 'Alpaca',    icon: '🦙' },
+  { id: 'robinhood', name: 'Robinhood', icon: '🏹' },
+  { id: 'webull',    name: 'Webull',    icon: '🐂' },
+  { id: 'schwab',    name: 'Schwab',    icon: '🏦' },
+  { id: 'ibkr',      name: 'IBKR',      icon: '📈' },
+  { id: 'coinbase',  name: 'Coinbase',  icon: '🔵' },
+  { id: 'kraken',    name: 'Kraken',    icon: '🐙' },
 ];
 
 type Step = 'welcome' | 'platform' | 'oauth' | 'scanning' | 'ready';
@@ -30,9 +30,27 @@ type Step = 'welcome' | 'platform' | 'oauth' | 'scanning' | 'ready';
 export default function OnboardingScreen() {
   const [step, setStep] = useState<Step>('welcome');
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
-  const [scanProgress, setScanProgress] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const cardAnims = useRef(PLATFORMS.map(() => new Animated.Value(1))).current;
   const setShowOnboarding = useStore(s => s.setShowOnboarding);
+
+  function pressIn(index: number) {
+    Animated.spring(cardAnims[index], {
+      toValue: 0.93,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }
+
+  function pressOut(index: number) {
+    Animated.spring(cardAnims[index], {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 6,
+    }).start();
+  }
 
   function startScan() {
     setStep('scanning');
@@ -98,24 +116,23 @@ export default function OnboardingScreen() {
           <Text style={styles.stepSub}>FEDGE connects via secure OAuth. We never store your password.</Text>
 
           <View style={styles.platformGrid}>
-            {PLATFORMS.map(p => (
-              <TouchableOpacity
-                key={p.id}
-                style={[
-                  styles.platformCard,
-                  selectedPlatform === p.id && styles.platformCardSelected,
-                  !p.available && styles.platformCardDisabled,
-                ]}
-                onPress={() => p.available && setSelectedPlatform(p.id)}
-                activeOpacity={p.available ? 0.7 : 1}
-              >
-                <Text style={styles.platformIcon}>{p.icon}</Text>
-                <Text style={[styles.platformName, !p.available && styles.platformNameDisabled]}>
-                  {p.name}
-                </Text>
-                {!p.available && <Text style={styles.comingSoon}>SOON</Text>}
-                {selectedPlatform === p.id && <View style={styles.selectedDot} />}
-              </TouchableOpacity>
+            {PLATFORMS.map((p, i) => (
+              <Animated.View key={p.id} style={{ transform: [{ scale: cardAnims[i] }] }}>
+                <TouchableOpacity
+                  style={[
+                    styles.platformCard,
+                    selectedPlatform === p.id && styles.platformCardSelected,
+                  ]}
+                  onPress={() => setSelectedPlatform(p.id)}
+                  onPressIn={() => pressIn(i)}
+                  onPressOut={() => pressOut(i)}
+                  activeOpacity={1}
+                >
+                  <Text style={styles.platformIcon}>{p.icon}</Text>
+                  <Text style={styles.platformName}>{p.name}</Text>
+                  {selectedPlatform === p.id && <View style={styles.selectedDot} />}
+                </TouchableOpacity>
+              </Animated.View>
             ))}
           </View>
 
@@ -339,9 +356,6 @@ const styles = StyleSheet.create({
     borderColor: colors.orange,
     backgroundColor: colors.orangeGlow,
   },
-  platformCardDisabled: {
-    opacity: 0.4,
-  },
   platformIcon: {
     fontSize: 28,
   },
@@ -350,15 +364,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.text,
     letterSpacing: 0.5,
-  },
-  platformNameDisabled: {
-    color: colors.textDim,
-  },
-  comingSoon: {
-    fontFamily: typography.mono.bold,
-    fontSize: 8,
-    color: colors.textDim,
-    letterSpacing: 1,
   },
   selectedDot: {
     position: 'absolute',

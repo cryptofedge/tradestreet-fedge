@@ -39,7 +39,7 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     IBMPlexMono_300Light,
     IBMPlexMono_400Regular,
     IBMPlexMono_500Medium,
@@ -53,12 +53,14 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
+    // Hide splash as soon as fonts load OR if they error — never stay stuck
+    if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  // Don't block render on font error — fall back to system fonts
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
