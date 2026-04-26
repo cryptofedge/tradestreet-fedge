@@ -1,6 +1,9 @@
 // ============================================
 // FEDGE 2.O — Boot / Splash Screen
-// apps/mobile/src/components/SplashScreen.tsx
+// apps/mobile/src/components/FedgeBootScreen.tsx
+//
+// Renamed from SplashScreen to avoid collision
+// with expo-splash-screen import in _layout.tsx
 // ============================================
 
 import React, { useEffect, useState } from 'react';
@@ -19,7 +22,6 @@ import { colors, typography, fontSize, spacing } from '../theme';
 
 const { width: W, height: H } = Dimensions.get('window');
 
-const SUBTITLE = 'TRADING INTELLIGENCE ONLINE';
 const BOOT_LINES = [
   'INITIALIZING FEDGE CORE v2.0.1...',
   'CONNECTING TO MARKETS...',
@@ -30,11 +32,8 @@ const BOOT_LINES = [
 
 interface Props { onDone?: () => void; duration?: number; }
 
-function TypewriterText({ text, startDelay = 0, color = colors.textMuted, style }: {
-  text: string; startDelay?: number; color?: string; style?: any;
-}) {
+function TypewriterSubtitle({ text, startDelay = 0 }: { text: string; startDelay?: number }) {
   const [displayed, setDisplayed] = useState('');
-
   useEffect(() => {
     let i = 0;
     const timeout = setTimeout(() => {
@@ -42,61 +41,58 @@ function TypewriterText({ text, startDelay = 0, color = colors.textMuted, style 
         i++;
         setDisplayed(text.slice(0, i));
         if (i >= text.length) clearInterval(interval);
-      }, 38);
+      }, 36);
       return () => clearInterval(interval);
     }, startDelay);
     return () => clearTimeout(timeout);
   }, [text, startDelay]);
-
-  return <Text style={[{ color, fontFamily: typography.mono.regular }, style]}>{displayed}</Text>;
+  return (
+    <Text style={styles.subtitle}>{displayed}</Text>
+  );
 }
 
 function ScanLine() {
   const translateY = useSharedValue(-H * 0.6);
-
   useEffect(() => {
-    translateY.value = withRepeat(
-      withTiming(H * 0.6, { duration: 2200, easing: Easing.linear }),
-      -1,
-      false
-    );
     translateY.value = -H * 0.6;
+    translateY.value = withRepeat(
+      withTiming(H * 0.6, { duration: 2400, easing: Easing.linear }),
+      -1, false
+    );
   }, []);
-
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
-
-  return (
-    <Animated.View style={[styles.scanLine, style]} pointerEvents="none" />
-  );
+  return <Animated.View style={[styles.scanLine, style]} pointerEvents="none" />;
 }
 
-export function SplashScreen({ onDone, duration = 3800 }: Props) {
+export function FedgeBootScreen({ onDone, duration = 3800 }: Props) {
   const containerOpacity = useSharedValue(1);
-  const logoOpacity = useSharedValue(0);
-  const logoScale = useSharedValue(0.85);
+  const contentOpacity = useSharedValue(0);
+  const contentY = useSharedValue(16);
   const glowOpacity = useSharedValue(0);
   const [bootIndex, setBootIndex] = useState(0);
 
   useEffect(() => {
-    // Logo reveal
-    logoOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
-    logoScale.value = withDelay(200, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
-    glowOpacity.value = withDelay(500, withRepeat(
+    // Content reveal
+    contentOpacity.value = withDelay(300, withTiming(1, { duration: 500 }));
+    contentY.value = withDelay(300, withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) }));
+
+    // Orange glow pulse on FEDGE badge
+    glowOpacity.value = withDelay(700, withRepeat(
       withSequence(
-        withTiming(1, { duration: 1200 }),
-        withTiming(0.4, { duration: 1200 })
+        withTiming(1, { duration: 1100 }),
+        withTiming(0.3, { duration: 1100 })
       ), -1, false
     ));
 
-    // Boot lines ticker
+    // Boot log ticker
     let idx = 0;
     const interval = setInterval(() => {
       idx++;
       setBootIndex(idx);
       if (idx >= BOOT_LINES.length) clearInterval(interval);
-    }, 500);
+    }, 520);
 
     // Auto-exit
     const exitTimeout = setTimeout(() => {
@@ -109,35 +105,37 @@ export function SplashScreen({ onDone, duration = 3800 }: Props) {
   }, []);
 
   const containerStyle = useAnimatedStyle(() => ({ opacity: containerOpacity.value }));
-  const logoStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-    transform: [{ scale: logoScale.value }],
+  const contentStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+    transform: [{ translateY: contentY.value }],
   }));
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
+  const glowStyle = useAnimatedStyle(() => ({ opacity: glowOpacity.value }));
 
   return (
     <Animated.View style={[styles.container, containerStyle]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
       <ScanLine />
 
-      {/* Corner decorations */}
+      {/* Corner brackets */}
       <View style={[styles.corner, styles.cornerTL]} />
       <View style={[styles.corner, styles.cornerBR]} />
 
-      {/* Center content */}
-      <Animated.View style={[styles.logoWrap, logoStyle]}>
-        {/* Glow behind logo */}
-        <Animated.View style={[styles.logoGlow, glowStyle]} />
+      {/* Center logo — matches onboarding hierarchy */}
+      <Animated.View style={[styles.logoWrap, contentStyle]}>
+        {/* FEDGE 2.O — small badge (matches onboarding fedgeBadge style) */}
+        <Animated.View style={[styles.fedgeBadgeWrap, glowStyle]}>
+          <Text style={styles.fedgeBadge}>FEDGE 2.O</Text>
+        </Animated.View>
 
-        <Text style={styles.logoText}>FEDGE 2.O</Text>
+        {/* TRADESTREET — hero title (matches onboarding heroTitle style) */}
+        <Text style={styles.heroTitle}>TRADE{'\n'}STREET</Text>
+
         <View style={styles.divider} />
-        <TypewriterText
-          text={SUBTITLE}
-          startDelay={700}
-          color={colors.orange}
-          style={styles.subtitle}
+
+        {/* Typewriter subtitle */}
+        <TypewriterSubtitle
+          text="TRADING INTELLIGENCE ONLINE"
+          startDelay={800}
         />
       </Animated.View>
 
@@ -153,7 +151,6 @@ export function SplashScreen({ onDone, duration = 3800 }: Props) {
         ))}
       </View>
 
-      {/* Version */}
       <Text style={styles.version}>v2.0.1 · ECLAT UNIVERSE</Text>
     </Animated.View>
   );
@@ -162,7 +159,6 @@ export function SplashScreen({ onDone, duration = 3800 }: Props) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    inset: 0,
     width: W,
     height: H,
     backgroundColor: colors.bg,
@@ -175,7 +171,7 @@ const styles = StyleSheet.create({
     width: W,
     height: 2,
     backgroundColor: colors.orange,
-    opacity: 0.06,
+    opacity: 0.07,
     zIndex: 1,
   },
   corner: {
@@ -183,35 +179,42 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderColor: colors.orange,
-    opacity: 0.4,
+    opacity: 0.35,
   },
-  cornerTL: { top: 40, left: 24, borderTopWidth: 1, borderLeftWidth: 1 },
-  cornerBR: { bottom: 40, right: 24, borderBottomWidth: 1, borderRightWidth: 1 },
+  cornerTL: { top: 44, left: 24, borderTopWidth: 1, borderLeftWidth: 1 },
+  cornerBR: { bottom: 44, right: 24, borderBottomWidth: 1, borderRightWidth: 1 },
   logoWrap: { alignItems: 'center', zIndex: 2 },
-  logoGlow: {
-    position: 'absolute',
-    width: 240,
-    height: 80,
-    backgroundColor: colors.orange,
-    opacity: 0.06,
-    borderRadius: 40,
-    filter: [{ blur: 40 }] as any,
+  fedgeBadgeWrap: {
+    marginBottom: spacing.md,
+    shadowColor: colors.orange,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 16,
   },
-  logoText: {
+  fedgeBadge: {
     fontFamily: typography.mono.bold,
-    fontSize: 52,
+    fontSize: fontSize.xs,
+    color: colors.orange,
+    letterSpacing: 4,
+  },
+  heroTitle: {
+    fontFamily: typography.mono.bold,
+    fontSize: 56,
     color: colors.white,
-    letterSpacing: 6,
+    lineHeight: 58,
+    letterSpacing: -1,
+    textAlign: 'center',
   },
   divider: {
     width: 180,
     height: 1,
     backgroundColor: colors.orange,
-    opacity: 0.4,
-    marginVertical: spacing.md,
+    opacity: 0.35,
+    marginVertical: spacing.lg,
   },
   subtitle: {
+    fontFamily: typography.mono.regular,
     fontSize: fontSize.tiny,
+    color: colors.orange,
     letterSpacing: 4,
   },
   bootLog: {
