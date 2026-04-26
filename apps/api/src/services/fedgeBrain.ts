@@ -27,7 +27,7 @@ Core principles:
 - Risk management is sacred — you protect capital first`;
 
 export class FedgeBrainService {
-  private model = process.env.FEDGE_BRAIN_MODEL ?? 'claude-sonnet-4';
+  private model = process.env.FEDGE_BRAIN_MODEL ?? 'claude-sonnet-4-6';
   private maxTokens = Number(process.env.FEDGE_MAX_TOKENS ?? 2000);
 
   // ---- SIGNAL GENERATION ----

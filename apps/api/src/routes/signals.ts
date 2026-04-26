@@ -54,6 +54,13 @@ export async function signalRoutes(fastify: FastifyInstance) {
       }
     }
 
+    // Increment free tier daily counter
+    if (user.tier === 'free') {
+      const usageKey = `signals:used:${user.id}:${new Date().toDateString()}`;
+      await fastify.redis.incr(usageKey);
+      await fastify.redis.expire(usageKey, 86400);
+    }
+
     return {
       data: {
         signals: signals.slice(0, limit),
@@ -120,7 +127,7 @@ export async function signalRoutes(fastify: FastifyInstance) {
         signal.ticker,
         signal.action === 'BUY' ? 'buy' : 'sell',
         orderValue,
-        { portfolio, positions: portfolio.positions ?? [], recentSignals: [], userProfile: { xp: 0, level: 1, streakDays: 0, badges: [] } }
+        { portfolio: portfolio.summary, positions: portfolio.positions ?? [], recentSignals: [], userProfile: { xp: 0, level: 1, streakDays: 0, badges: [] } }
       );
 
       if (!riskCheck.approved) {

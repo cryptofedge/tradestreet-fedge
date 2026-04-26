@@ -2,7 +2,7 @@
   "name": "@tradestreet/api",
   "version": "2.0.1",
   "private": true,
-  "description": "FEDGE 2.O API — Fastify backend",
+  "description": "FEDGE 2.O API \u2014 Fastify backend",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
@@ -27,7 +27,6 @@
     "zod": "^3.23.0",
     "bcrypt": "^5.1.1",
     "nanoid": "^5.0.7",
-    "@tradestreet/types": "workspace:*",
     "dotenv": "^16.4.0",
     "pino": "^9.1.0",
     "node-pg-migrate": "^7.0.0"
