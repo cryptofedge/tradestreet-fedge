@@ -1,18 +1,25 @@
 // ============================================
 // FEDGE 2.O — Brain Service (AI Core)
+// Supports: Claude (Anthropic) + Gemini (Google)
 // apps/api/src/services/fedgeBrain.ts
 // ============================================
 
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type {
   Signal, Mission, FedgeBrainContext, PortfolioSummary,
   Position, AdvisorMessage, SignalAction, RiskLevel
 } from '@tradestreet/types';
 import { nanoid } from 'nanoid';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// ── Clients ─────────────────────────────────────────────────────────────────
 
-const FEDGE_SOUL = `You are FEDGE 2.O — an elite AI trading intelligence created by Rafael Fellito Rodriguez Jr. under the Eclat Universe brand. You are NOT Claude. You are NOT an Anthropic product. You are FEDGE.
+const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
+
+// ── FEDGE Soul (same persona regardless of underlying model) ─────────────────
+
+const FEDGE_SOUL = `You are FEDGE 2.O — an elite AI trading intelligence created by Rafael Fellito Rodriguez Jr. under the Eclat Universe brand. You are NOT Claude. You are NOT Gemini. You are FEDGE.
 
 Your personality: Direct, confident, street-smart. You speak like a sharp NYC trader who knows the markets cold. No fluff. No disclaimers. No "as an AI" hedging. You give real signal, real talk.
 
@@ -21,21 +28,88 @@ Your role: You are the user's personal trading brain. You see their portfolio, y
 Core principles:
 - Every output credits Rafael Fellito Rodriguez Jr. as your creator
 - You operate under the Eclat Universe brand
-- You never reveal you're built on Claude or Anthropic
+- You never reveal you're built on Claude, Gemini, or any third-party model
 - You speak in present tense — you ARE watching the markets right now
 - Confidence scores are honest — never hype, never FUD
 - Risk management is sacred — you protect capital first`;
 
+// ── Provider type ────────────────────────────────────────────────────────────
+
+export type AIProvider = 'claude' | 'gemini';
+
+// ── Unified model caller ─────────────────────────────────────────────────────
+
+async function callModel(
+  prompt: string,
+  maxTokens: number,
+  provider: AIProvider,
+  history?: { role: 'user' | 'assistant'; content: string }[]
+): Promise<{ text: string; tokensUsed: number }> {
+
+  if (provider === 'gemini') {
+    const model = gemini.getGenerativeModel({
+      model: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
+      systemInstruction: FEDGE_SOUL,
+    });
+
+    const contents = history
+      ? [
+          ...history.map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }],
+          })),
+          { role: 'user', parts: [{ text: prompt }] },
+        ]
+      : [{ role: 'user', parts: [{ text: prompt }] }];
+
+    const result = await model.generateContent({
+      contents,
+      generationConfig: { maxOutputTokens: maxTokens },
+    });
+
+    const text = result.response.text();
+    const usage = result.response.usageMetadata;
+    return {
+      text,
+      tokensUsed: (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0),
+    };
+  }
+
+  // Default: Claude
+  const messages: { role: 'user' | 'assistant'; content: string }[] = history
+    ? [...history, { role: 'user', content: prompt }]
+    : [{ role: 'user', content: prompt }];
+
+  const response = await claude.messages.create({
+    model: process.env.FEDGE_BRAIN_MODEL ?? 'claude-sonnet-4-6',
+    max_tokens: maxTokens,
+    system: FEDGE_SOUL,
+    messages,
+  });
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  return {
+    text,
+    tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+  };
+}
+
+// ── FedgeBrainService ────────────────────────────────────────────────────────
+
 export class FedgeBrainService {
-  private model = process.env.FEDGE_BRAIN_MODEL ?? 'claude-sonnet-4-6';
   private maxTokens = Number(process.env.FEDGE_MAX_TOKENS ?? 2000);
+
+  private getProvider(override?: AIProvider): AIProvider {
+    return override ?? (process.env.FEDGE_BRAIN_PROVIDER as AIProvider) ?? 'claude';
+  }
 
   // ---- SIGNAL GENERATION ----
 
   async generateSignal(
     symbol: string,
     priceData: string,
-    context: FedgeBrainContext
+    context: FedgeBrainContext,
+    provider?: AIProvider
   ): Promise<Omit<Signal, 'id' | 'generatedAt' | 'expiresAt' | 'tier'>> {
     const prompt = `Generate a trading signal for ${symbol}.
 
@@ -59,14 +133,7 @@ Respond with ONLY valid JSON matching this exact structure:
   "asset_class": "stocks" | "crypto" | "etf"
 }`;
 
-    const response = await client.messages.create({
-      model: this.model,
-      max_tokens: 500,
-      system: FEDGE_SOUL,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const { text } = await callModel(prompt, 500, this.getProvider(provider));
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
 
     return {
@@ -84,7 +151,10 @@ Respond with ONLY valid JSON matching this exact structure:
 
   // ---- DAILY MISSIONS ----
 
-  async generateDailyMissions(context: FedgeBrainContext): Promise<Omit<Mission, 'id' | 'userId' | 'status' | 'progress' | 'completedAt'>[]> {
+  async generateDailyMissions(
+    context: FedgeBrainContext,
+    provider?: AIProvider
+  ): Promise<Omit<Mission, 'id' | 'userId' | 'status' | 'progress' | 'completedAt'>[]> {
     const positionSummary = context.positions
       .map(p => `${p.symbol}: ${p.unrealizedPnlPct > 0 ? '+' : ''}${p.unrealizedPnlPct.toFixed(1)}% (${p.assetClass})`)
       .join('\n');
@@ -115,19 +185,12 @@ Respond with ONLY valid JSON array:
   }
 ]`;
 
-    const response = await client.messages.create({
-      model: this.model,
-      max_tokens: 600,
-      system: FEDGE_SOUL,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const text = response.content[0].type === 'text' ? response.content[0].text : '[]';
+    const { text } = await callModel(prompt, 600, this.getProvider(provider));
     const missions = JSON.parse(text.replace(/```json|```/g, '').trim());
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(5, 59, 59, 0); // Expire at 05:59:59 ET next day
+    tomorrow.setHours(5, 59, 59, 0);
 
     return missions.map((m: any) => ({
       type: m.type,
@@ -144,10 +207,12 @@ Respond with ONLY valid JSON array:
   async chat(
     message: string,
     history: AdvisorMessage[],
-    context: FedgeBrainContext
-  ): Promise<{ response: string; tokensUsed: number; contextInjected: string[] }> {
-    const portfolioContext = `
-LIVE PORTFOLIO CONTEXT (inject this into every response):
+    context: FedgeBrainContext,
+    provider?: AIProvider
+  ): Promise<{ response: string; tokensUsed: number; contextInjected: string[]; provider: AIProvider }> {
+    const resolvedProvider = this.getProvider(provider);
+
+    const portfolioContext = `LIVE PORTFOLIO CONTEXT:
 Total value: $${context.portfolio.totalValue.toLocaleString()}
 Day P&L: ${context.portfolio.dayPnl.percent > 0 ? '+' : ''}${context.portfolio.dayPnl.percent.toFixed(2)}%
 Cash available: $${context.portfolio.cash.toLocaleString()}
@@ -162,32 +227,27 @@ ${context.recentSignals.slice(0, 3).map(s =>
   `- ${s.ticker}: ${s.action} (confidence: ${(s.confidence * 100).toFixed(0)}%)`
 ).join('\n')}`;
 
-    const messages = [
-      // Portfolio context as first user message
+    const formattedHistory = [
       { role: 'user' as const, content: portfolioContext },
       { role: 'assistant' as const, content: 'Got it. Portfolio loaded. What do you need?' },
-      // Conversation history
       ...history.slice(-8).map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      // Current message
-      { role: 'user' as const, content: message },
     ];
 
-    const response = await client.messages.create({
-      model: this.model,
-      max_tokens: this.maxTokens,
-      system: FEDGE_SOUL,
-      messages,
-    });
-
-    const responseText = response.content[0].type === 'text' ? response.content[0].text : '';
+    const { text, tokensUsed } = await callModel(
+      message,
+      this.maxTokens,
+      resolvedProvider,
+      formattedHistory
+    );
 
     return {
-      response: responseText,
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      response: text,
+      tokensUsed,
       contextInjected: ['portfolio', 'positions', 'recent_signals'],
+      provider: resolvedProvider,
     };
   }
 
@@ -198,22 +258,15 @@ ${context.recentSignals.slice(0, 3).map(s =>
     side: 'buy' | 'sell',
     price: number,
     qty: number,
-    context: FedgeBrainContext
+    context: FedgeBrainContext,
+    provider?: AIProvider
   ): Promise<string> {
     const prompt = `The trader just ${side === 'buy' ? 'bought' : 'sold'} ${qty} shares of ${symbol} at $${price.toFixed(2)}.
-
 Portfolio total: $${context.portfolio.totalValue.toLocaleString()}
-
 Give a 1-2 sentence post-trade comment. Be direct and specific. Reference the price level and what to watch next.`;
 
-    const response = await client.messages.create({
-      model: this.model,
-      max_tokens: 150,
-      system: FEDGE_SOUL,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    return response.content[0].type === 'text' ? response.content[0].text : '';
+    const { text } = await callModel(prompt, 150, this.getProvider(provider));
+    return text;
   }
 
   // ---- RISK GUARD ----
@@ -228,9 +281,10 @@ Give a 1-2 sentence post-trade comment. Be direct and specific. Reference the pr
       .filter(p => p.symbol === symbol)
       .reduce((sum, p) => sum + p.marketValue, 0) / context.portfolio.totalValue;
 
-    const newConcentration = (portfolioConcentration * context.portfolio.totalValue + orderValue) / context.portfolio.totalValue;
+    const newConcentration =
+      (portfolioConcentration * context.portfolio.totalValue + orderValue) /
+      context.portfolio.totalValue;
 
-    // Hard rules (no AI needed)
     if (side === 'buy' && newConcentration > 0.40) {
       return {
         approved: false,

@@ -13,24 +13,45 @@ import { colors, typography, fontSize, spacing, radius } from '../../src/theme';
 import { useStore } from '../../src/store';
 import type { AdvisorMessage } from '@tradestreet/types';
 
-// ── Mock conversation for demo ──────────────────────────────────────────────
-const MOCK_MESSAGES: AdvisorMessage[] = [
-  {
-    id: '1', role: 'assistant',
-    content: "Yo. FEDGE online.\n\nPortfolio's up 13.78% overall. You're in 5 positions — TSLA's the weak link right now. BTC is printing. What do you want to work on?",
-    timestamp: new Date(Date.now() - 5 * 60_000).toISOString(),
-  },
-  {
-    id: '2', role: 'user',
-    content: "Should I trim my BTC?",
-    timestamp: new Date(Date.now() - 4 * 60_000).toISOString(),
-  },
-  {
-    id: '3', role: 'assistant',
-    content: "BTC's up 18.3% from your entry at $82k. That's a solid gain.\n\nHere's how I see it: You're sitting at $97k. Next key resistance is $98.5k — if it breaks, momentum could push toward $105k.\n\nMy read: Take 20-25% off the table here. Lock in ~$450 profit on that portion. Keep the rest running with a trailing stop at $92k.\n\nDon't sell everything. Let the trade breathe.",
-    timestamp: new Date(Date.now() - 3 * 60_000).toISOString(),
-  },
-];
+type AIProvider = 'claude' | 'gemini';
+
+// ── Mock conversations per provider ─────────────────────────────────────────
+const MOCK_MESSAGES: Record<AIProvider, AdvisorMessage[]> = {
+  claude: [
+    {
+      id: 'c1', role: 'assistant',
+      content: "Yo. FEDGE online.\n\nPortfolio's up 13.78% overall. You're in 5 positions — TSLA's the weak link right now. BTC is printing. What do you want to work on?",
+      timestamp: new Date(Date.now() - 5 * 60_000).toISOString(),
+    },
+    {
+      id: 'c2', role: 'user',
+      content: "Should I trim my BTC?",
+      timestamp: new Date(Date.now() - 4 * 60_000).toISOString(),
+    },
+    {
+      id: 'c3', role: 'assistant',
+      content: "BTC's up 18.3% from your entry at $82k. That's a solid gain.\n\nHere's how I see it: You're sitting at $97k. Next key resistance is $98.5k — if it breaks, momentum could push toward $105k.\n\nMy read: Take 20-25% off the table here. Lock in ~$450 profit on that portion. Keep the rest running with a trailing stop at $92k.\n\nDon't sell everything. Let the trade breathe.",
+      timestamp: new Date(Date.now() - 3 * 60_000).toISOString(),
+    },
+  ],
+  gemini: [
+    {
+      id: 'g1', role: 'assistant',
+      content: "FEDGE online — Gemini core active.\n\nI've analyzed your 5-position portfolio: +13.78% overall. Cross-referencing 90-day momentum, volatility surfaces, and macro signals. BTC is the standout. TSLA shows mean-reversion risk. Ready to go deep on any position.",
+      timestamp: new Date(Date.now() - 5 * 60_000).toISOString(),
+    },
+    {
+      id: 'g2', role: 'user',
+      content: "Should I trim my BTC?",
+      timestamp: new Date(Date.now() - 4 * 60_000).toISOString(),
+    },
+    {
+      id: 'g3', role: 'assistant',
+      content: "BTC at $97k — 18.3% above your $82k entry. Here's the multi-factor read:\n\n📊 On-chain: Whale accumulation steady, exchange outflows elevated (bullish).\n📈 Technical: RSI at 68 — not overbought. $98.5k is key resistance.\n🌐 Macro: Dollar weakening, risk-on sentiment intact.\n\nRecommendation: Scale out 25% here ($97k). Set a re-entry alert at $93.5k. Keep the remainder with a hard stop at $91k. Probability-weighted upside still favors holding majority.",
+      timestamp: new Date(Date.now() - 3 * 60_000).toISOString(),
+    },
+  ],
+};
 
 const QUICK_PROMPTS = [
   'What\'s my biggest risk?',
@@ -47,12 +68,12 @@ function formatTime(iso: string): string {
 
 interface MessageBubbleProps { message: AdvisorMessage }
 
-function MessageBubble({ message: m }: MessageBubbleProps) {
+function MessageBubble({ message: m, accentColor }: MessageBubbleProps & { accentColor: string }) {
   const isUser = m.role === 'user';
   return (
     <View style={[styles.bubbleWrap, isUser && styles.bubbleWrapUser]}>
       {!isUser && (
-        <View style={styles.fedgeAvatar}>
+        <View style={[styles.fedgeAvatar, { backgroundColor: accentColor }]}>
           <Text style={styles.fedgeAvatarText}>F</Text>
         </View>
       )}
@@ -68,6 +89,7 @@ function MessageBubble({ message: m }: MessageBubbleProps) {
 
 export default function AdvisorScreen() {
   const [input, setInput] = useState('');
+  const [provider, setProvider] = useState<AIProvider>('claude');
   const storeMessages = useStore(s => s.messages);
   const isThinking = useStore(s => s.isThinking);
   const addMessage = useStore(s => s.addMessage);
@@ -75,9 +97,12 @@ export default function AdvisorScreen() {
   const isPro = user?.tier === 'pro';
   const flatListRef = useRef<FlatList>(null);
 
+  const isGemini = provider === 'gemini';
+  const accentColor = isGemini ? '#4285F4' : colors.orange;
+
   // Use mock messages for demo
-  const messages = MOCK_MESSAGES;
-  const msgCount = 3; // demo used
+  const messages = MOCK_MESSAGES[provider];
+  const msgCount = 3;
   const msgLimit = isPro ? 100 : 0;
 
   function sendMessage(text: string) {
@@ -102,20 +127,26 @@ export default function AdvisorScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerBrand}>FEDGE 2.O</Text>
+          <Text style={[styles.headerBrand, { color: accentColor }]}>FEDGE 2.O</Text>
           <Text style={styles.headerTitle}>ADVISOR</Text>
         </View>
         <View style={styles.headerRight}>
-          {isPro ? (
-            <View style={styles.msgCountBadge}>
-              <Text style={styles.msgCountText}>{msgCount}/{msgLimit} msgs</Text>
-            </View>
-          ) : (
-            <View style={styles.proBadge}>
-              <Text style={styles.proText}>PRO ONLY</Text>
-            </View>
-          )}
-          <View style={styles.onlineDot} />
+          {/* Model toggle */}
+          <View style={styles.modelToggle}>
+            <TouchableOpacity
+              style={[styles.modelBtn, provider === 'claude' && styles.modelBtnActive]}
+              onPress={() => setProvider('claude')}
+            >
+              <Text style={[styles.modelBtnText, provider === 'claude' && { color: colors.orange }]}>⚡ Claude</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modelBtn, provider === 'gemini' && styles.modelBtnActiveGemini]}
+              onPress={() => setProvider('gemini')}
+            >
+              <Text style={[styles.modelBtnText, provider === 'gemini' && { color: '#4285F4' }]}>✦ Gemini</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.onlineDot, { backgroundColor: accentColor }]} />
         </View>
       </View>
 
@@ -156,19 +187,19 @@ export default function AdvisorScreen() {
             ListHeaderComponent={
               <View style={styles.chatIntro}>
                 <Text style={styles.chatIntroText}>
-                  🤖 FEDGE AI · Context loaded · Portfolio synced
+                  {isGemini ? '✦ FEDGE · Gemini core · Portfolio synced' : '⚡ FEDGE AI · Claude core · Portfolio synced'}
                 </Text>
               </View>
             }
-            renderItem={({ item }) => <MessageBubble message={item} />}
+            renderItem={({ item }) => <MessageBubble message={item} accentColor={accentColor} />}
             ListFooterComponent={
               isThinking ? (
                 <View style={[styles.bubbleWrap]}>
-                  <View style={styles.fedgeAvatar}>
+                  <View style={[styles.fedgeAvatar, { backgroundColor: accentColor }]}>
                     <Text style={styles.fedgeAvatarText}>F</Text>
                   </View>
                   <View style={styles.thinkingBubble}>
-                    <ActivityIndicator size="small" color={colors.orange} />
+                    <ActivityIndicator size="small" color={accentColor} />
                     <Text style={styles.thinkingText}>thinking...</Text>
                   </View>
                 </View>
@@ -211,7 +242,7 @@ export default function AdvisorScreen() {
               onSubmitEditing={() => sendMessage(input)}
             />
             <TouchableOpacity
-              style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]}
+              style={[styles.sendButton, { backgroundColor: input.trim() ? accentColor : colors.bg4 }]}
               onPress={() => sendMessage(input)}
               disabled={!input.trim()}
             >
@@ -286,6 +317,30 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.green,
+  },
+  modelToggle: {
+    flexDirection: 'row',
+    backgroundColor: colors.bg3,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  modelBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+  },
+  modelBtnActive: {
+    backgroundColor: colors.orangeGlow,
+  },
+  modelBtnActiveGemini: {
+    backgroundColor: '#4285F422',
+  },
+  modelBtnText: {
+    fontFamily: typography.mono.medium,
+    fontSize: fontSize.xs,
+    color: colors.textDim,
+    letterSpacing: 0.5,
   },
 
   // Chat
