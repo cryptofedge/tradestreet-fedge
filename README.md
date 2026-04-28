@@ -132,14 +132,6 @@ WebSocket: `wss://stream.fedge.io/v2`
 - **Tournaments** — Entry fee squad competitions
 - **Education** — Paid FEDGE Academy modules
 
----
-
-## License
-
-Proprietary — Eclat Universe © 2025 Rafael Fellito Rodriguez Jr. All rights reserved.
-
----
-
 ## 📋 License & Brand
 
 ![FEDGE 2.O Logo](FEDGE-2O-Logo.png)
@@ -221,6 +213,10 @@ When referencing this software, please include:
 
 For licensing, partnerships, or usage permissions:
 📧 **cryptofedge@gmail.com**
+
+---
+
+**Learn more:** [Full License](LICENSE)
 
 ---
 
