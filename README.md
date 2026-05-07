@@ -11,15 +11,15 @@ TradeStreet is a mobile trading app (iOS + Android) that combines real brokerage
 
 ```
 tradestreet/
-Γö£ΓöÇΓöÇ apps/
-│   Γö£ΓöÇΓöÇ mobile/          # React Native + Expo (iOS + Android)
-│   ΓööΓöÇΓöÇ api/             # Node.js + Fastify (FEDGE API backend)
-Γö£ΓöÇΓöÇ packages/
-│   Γö£ΓöÇΓöÇ types/           # Shared TypeScript interfaces
-│   ΓööΓöÇΓöÇ config/          # Shared configuration constants
-Γö£ΓöÇΓöÇ docker-compose.yml
-Γö£ΓöÇΓöÇ turbo.json
-ΓööΓöÇΓöÇ package.json
+├── apps/
+│   ├── mobile/          # React Native + Expo (iOS + Android)
+│   └── api/             # Node.js + Fastify (FEDGE API backend)
+├── packages/
+│   ├── types/           # Shared TypeScript interfaces
+│   └── config/          # Shared configuration constants
+├── docker-compose.yml
+├── turbo.json
+└── package.json
 ```
 
 ## Tech Stack
@@ -174,5 +174,6 @@ Email: **cryptofedge@gmail.com**
 ---
 
 **Learn more:** [Full License](LICENSE)
+
 
 
