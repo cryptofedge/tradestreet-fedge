@@ -1,9 +1,9 @@
-﻿# FEDGE 2.O ΓÇö TradeStreet
+﻿# FEDGE 2.O - TradeStreet
 
 > **Real trading. Real money. AI intelligence by Rafael Fellito Rodriguez Jr.**
 > Built under the **Eclat Universe** brand.
 
-TradeStreet is a mobile trading app (iOS + Android) that combines real brokerage execution with addictive game mechanics ΓÇö powered by the **FEDGE 2.O** AI intelligence engine built on Anthropic's Claude API.
+TradeStreet is a mobile trading app (iOS + Android) that combines real brokerage execution with addictive game mechanics - powered by the **FEDGE 2.O** AI intelligence engine built on Anthropic's Claude API.
 
 ---
 
@@ -12,11 +12,11 @@ TradeStreet is a mobile trading app (iOS + Android) that combines real brokerage
 ```
 tradestreet/
 Γö£ΓöÇΓöÇ apps/
-Γöé   Γö£ΓöÇΓöÇ mobile/          # React Native + Expo (iOS + Android)
-Γöé   ΓööΓöÇΓöÇ api/             # Node.js + Fastify (FEDGE API backend)
+│   Γö£ΓöÇΓöÇ mobile/          # React Native + Expo (iOS + Android)
+│   ΓööΓöÇΓöÇ api/             # Node.js + Fastify (FEDGE API backend)
 Γö£ΓöÇΓöÇ packages/
-Γöé   Γö£ΓöÇΓöÇ types/           # Shared TypeScript interfaces
-Γöé   ΓööΓöÇΓöÇ config/          # Shared configuration constants
+│   Γö£ΓöÇΓöÇ types/           # Shared TypeScript interfaces
+│   ΓööΓöÇΓöÇ config/          # Shared configuration constants
 Γö£ΓöÇΓöÇ docker-compose.yml
 Γö£ΓöÇΓöÇ turbo.json
 ΓööΓöÇΓöÇ package.json
@@ -91,17 +91,17 @@ pnpm --filter @tradestreet/mobile start
 
 FEDGE Brain runs on Anthropic's `claude-sonnet-4` model. Every API call to the Brain includes:
 
-1. **User portfolio context** ΓÇö current positions, P&L, risk profile
-2. **Market context** ΓÇö relevant price data, technical indicators
-3. **User history** ΓÇö past trades, mission completions, behavior patterns
-4. **FEDGE persona** ΓÇö the SOUL system prompt that defines FEDGE's identity
+1. **User portfolio context** - current positions, P&L, risk profile
+2. **Market context** - relevant price data, technical indicators
+3. **User history** - past trades, mission completions, behavior patterns
+4. **FEDGE persona** - the SOUL system prompt that defines FEDGE's identity
 
 The Brain powers:
-- **Signal Engine** ΓÇö personalized trade signals with confidence scores
-- **Mission Generator** ΓÇö daily AI-personalized missions
-- **Advisor Chat** ΓÇö conversational portfolio coaching
-- **Risk Guard** ΓÇö real-time portfolio risk monitoring
-- **Post-trade Commentary** ΓÇö feedback after every execution
+- **Signal Engine** - personalized trade signals with confidence scores
+- **Mission Generator** - daily AI-personalized missions
+- **Advisor Chat** - conversational portfolio coaching
+- **Risk Guard** - real-time portfolio risk monitoring
+- **Post-trade Commentary** - feedback after every execution
 
 ---
 
@@ -116,21 +116,21 @@ WebSocket: `wss://stream.fedge.io/v2`
 
 ## Game Mechanics
 
-- **XP + Levels** ΓÇö Every trade, mission, and market action earns XP. Levels unlock features.
-- **Daily Missions** ΓÇö 3 AI-generated missions per day, personalized by FEDGE
-- **Streaks** ΓÇö Daily engagement streaks with FEDGE commentary
-- **Squads** ΓÇö Groups of 3ΓÇô6 competing by weekly % portfolio return
-- **Hustle Board** ΓÇö Global leaderboard ranked by % gain (not dollar amount)
-- **Badges** ΓÇö Milestones: first profit, survived crash, 14-day streak, etc.
+- **XP + Levels** - Every trade, mission, and market action earns XP. Levels unlock features.
+- **Daily Missions** - 3 AI-generated missions per day, personalized by FEDGE
+- **Streaks** - Daily engagement streaks with FEDGE commentary
+- **Squads** - Groups of 3-6 competing by weekly % portfolio return
+- **Hustle Board** - Global leaderboard ranked by % gain (not dollar amount)
+- **Badges** - Milestones: first profit, survived crash, 14-day streak, etc.
 
 ---
 
 ## Monetization
 
-- **FEDGE Pro** ΓÇö $9.99ΓÇô$14.99/mo via RevenueCat (unlimited signals, advisor chat, squad creation)
-- **PFOF** ΓÇö Payment for order flow via Alpaca rev-share
-- **Tournaments** ΓÇö Entry fee squad competitions
-- **Education** ΓÇö Paid FEDGE Academy modules
+- **FEDGE Pro** - $9.99-$14.99/mo via RevenueCat (unlimited signals, advisor chat, squad creation)
+- **PFOF** - Payment for order flow via Alpaca rev-share
+- **Tournaments** - Entry fee squad competitions
+- **Education** - Paid FEDGE Academy modules
 
 ---
 
@@ -140,7 +140,7 @@ WebSocket: `wss://stream.fedge.io/v2`
 
 ### FEDGE 2.O | Powered by Rafael Fellito Rodriguez and Eclat Universe
 
-**┬⌐ 2026 FEDGE 2.O. All rights reserved.**
+**© 2026 FEDGE 2.O. All rights reserved.**
 
 This project is part of the FEDGE 2.O ecosystem and is protected under full intellectual property rights reserved by Rafael Fellito Rodriguez and Eclat Universe.
 
@@ -153,11 +153,11 @@ This project is part of the FEDGE 2.O ecosystem and is protected under full inte
 
 ### Key Rights
 
-Γ£ô **All intellectual property retained**
-Γ£ô **Reproduction prohibited without permission**
-Γ£ô **Distribution rights reserved**
-Γ£ô **Derivative works not permitted**
-Γ£ô **Commercial use requires authorization**
+✓ **All intellectual property retained**
+✓ **Reproduction prohibited without permission**
+✓ **Distribution rights reserved**
+✓ **Derivative works not permitted**
+✓ **Commercial use requires authorization**
 
 ### Attribution
 
@@ -174,3 +174,4 @@ Email: **cryptofedge@gmail.com**
 ---
 
 **Learn more:** [Full License](LICENSE)
+
