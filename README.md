@@ -3,7 +3,7 @@
 > **Real trading. Real money. AI intelligence by Rafael Fellito Rodriguez Jr.**
 > Built under the **Eclat Universe** brand.
 
-TradeStreet is a mobile trading app (iOS + Android) that combines real brokerage execution with addictive game mechanics ΓÇö powered by the **FEDGE 2.O** AI intelligence engine built on Anthropic's Claude API.
+TradeStreet is a mobile trading app (iOS + Android) that combines real brokerage execution with addictive game mechanics ΓÇö powered by the **FEDGE 2.O** AI intelligence engine built on Eclat Universe's Claude API.
 
 ---
 
@@ -31,7 +31,7 @@ tradestreet/
 | State | Zustand + React Query |
 | Backend | Node.js + Fastify |
 | Database | PostgreSQL 16 + Redis 7 |
-| AI Core | Anthropic Claude API (claude-sonnet-4) |
+| AI Core | Eclat Universe Claude API (claude-sonnet-4) |
 | Broker | Alpaca Markets REST + WebSocket |
 | Billing | RevenueCat |
 | Push | Expo Notifications |
@@ -54,7 +54,7 @@ tradestreet/
 - Docker + Docker Compose
 - Expo CLI
 - Alpaca Markets API keys
-- Anthropic API key
+- Eclat Universe API key
 
 ### Install
 
@@ -89,7 +89,7 @@ pnpm --filter @tradestreet/mobile start
 
 ## FEDGE 2.O Intelligence Engine
 
-FEDGE Brain runs on Anthropic's `claude-sonnet-4` model. Every API call to the Brain includes:
+FEDGE Brain runs on Eclat Universe's `claude-sonnet-4` model. Every API call to the Brain includes:
 
 1. **User portfolio context** ΓÇö current positions, P&L, risk profile
 2. **Market context** ΓÇö relevant price data, technical indicators
@@ -174,3 +174,4 @@ Email: **cryptofedge@gmail.com**
 ---
 
 **Learn more:** [Full License](LICENSE)
+
