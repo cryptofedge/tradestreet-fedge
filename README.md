@@ -1,4 +1,4 @@
-﻿# FEDGE 2.O ΓÇö TradeStreet
+﻿﻿# FEDGE 2.O ΓÇö TradeStreet
 
 > **Real trading. Real money. AI intelligence by Rafael Fellito Rodriguez Jr.**
 > Built under the **Eclat Universe** brand.
