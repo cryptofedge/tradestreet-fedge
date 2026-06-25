@@ -677,6 +677,10 @@ body{background:#000;display:flex;justify-content:center;align-items:center;min-
         <div class="summary-card">
           <div class="summary-label">TOTAL VALUE</div>
           <div class="summary-value" id="port-val">$10,000.00</div>
+          <!-- Portfolio value sparkline -->
+          <div id="port-sparkline-wrap" style="height:56px;margin:10px 0 4px;position:relative">
+            <div id="port-sparkline" style="width:100%;height:100%"></div>
+          </div>
           <div class="pnl-row">
             <div class="pnl-item"><div class="pnl-label">TODAY</div><div class="pnl-value" id="port-day-val">+$0.00</div><div class="pnl-pct" id="port-day-pct">+0.00%</div></div>
             <div class="pnl-divider"></div>
@@ -996,6 +1000,8 @@ const ASSETS = {
   SPY:{name:'S&P 500 ETF',type:'etf',base:588.50,vol:0.0015},
   BTC:{name:'Bitcoin',type:'crypto',base:97250,vol:0.008},
   ETH:{name:'Ethereum',type:'crypto',base:3840,vol:0.009},
+  SOL:{name:'Solana',type:'crypto',base:152,vol:0.011},
+  DOGE:{name:'Dogecoin',type:'crypto',base:0.165,vol:0.015},
 };
 
 const SIGNAL_POOL = [
@@ -1007,6 +1013,8 @@ const SIGNAL_POOL = [
   {sym:'ETH',action:'BUY',conf:83,risk:'HIGH',target:1.10,reason:'Layer 2 adoption surge. Staking yield at 4.2%. DeFi TVL rising.'},
   {sym:'MSFT',action:'BUY',conf:88,risk:'LOW',target:1.06,reason:'Azure AI growth accelerating. Copilot revenue materializing. Strong FCF yield.'},
   {sym:'AMZN',action:'WATCH',conf:65,risk:'MED',target:1.04,reason:'AWS stabilizing. Ad revenue solid. Watching $235 resistance for breakout.'},
+  {sym:'SOL',action:'BUY',conf:80,risk:'HIGH',target:1.14,reason:'Solana TVL at ATH. DeFi + NFT volume surging. ETF speculation building.'},
+  {sym:'DOGE',action:'WATCH',conf:58,risk:'HIGH',target:1.08,reason:'Meme cycle heating up. Social volume spike. High risk — keep position small.'},
 ];
 
 let G = {
@@ -1031,7 +1039,13 @@ function mkSig(idx){
 
 function fmt(n){return(n<0?'-$':'$')+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmtPct(n){return(n>=0?'+':'')+n.toFixed(2)+'%'}
-function fmtP(sym,p){return sym==='BTC'?'$'+Math.round(p).toLocaleString():sym==='ETH'?'$'+p.toFixed(0):'$'+p.toFixed(2)}
+function fmtP(sym,p){
+  if(sym==='BTC') return '$'+Math.round(p).toLocaleString();
+  if(sym==='ETH') return '$'+p.toFixed(0);
+  if(sym==='SOL') return '$'+p.toFixed(2);
+  if(sym==='DOGE') return '$'+p.toFixed(4);
+  return '$'+p.toFixed(2);
+}
 function commas(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 
 /* ── PRICE ENGINE ── */
@@ -1109,13 +1123,13 @@ function execTrade(){
     const p=G.positions[sym];
     p.avgPrice=(p.avgPrice*p.qty+price*qty)/(p.qty+qty); p.qty+=qty;
     if(!G.missions.hold.openTime&&Object.keys(G.positions).length>0) G.missions.hold.openTime=Date.now();
-    toast('Bought '+qty+' '+sym+' @ '+fmtP(sym,price));
+    toast('Bought '+qty+' '+sym+' @ '+fmtP(sym,price));recordPortValue();
   } else {
     const p=G.positions[sym];
     if(!p||p.qty<qty){toast('Not enough shares');return;}
     G.cash+=total; p.qty-=qty;
     if(p.qty<=0) delete G.positions[sym];
-    toast('Sold '+qty+' '+sym+' @ '+fmtP(sym,price));
+    toast('Sold '+qty+' '+sym+' @ '+fmtP(sym,price));recordPortValue();
   }
   G.trades.push({sym,action,qty,price,t:Date.now()});
   xpGain(50,'Trade executed');
@@ -1303,7 +1317,7 @@ function switchTab(tab){
   if(s){s.classList.add('active','slide-in');}
   const ti=document.querySelector(`.tab-item[data-tab="${tab}"]`);
   if(ti) ti.classList.add('active');
-  if(tab==='portfolio') renderPortfolio();
+  if(tab==='portfolio'){renderPortfolio();setTimeout(renderPortSparkline,100);}
   if(tab==='feed') renderFeed();
   if(tab==='missions') renderMissions();
 }
@@ -1727,7 +1741,7 @@ window.addEventListener('load',()=>{
 /* ══════════════════════════════════════════════
    LIVE PRICE ENGINE — CoinGecko + Simulation
 ══════════════════════════════════════════════ */
-const COINGECKO_IDS = {BTC:'bitcoin',ETH:'ethereum'};
+const COINGECKO_IDS = {BTC:'bitcoin',ETH:'ethereum',SOL:'solana',DOGE:'dogecoin'};
 
 async function fetchLivePrices(){
   try{
@@ -1758,6 +1772,42 @@ setInterval(fetchLivePrices,30000);
 /* ══════════════════════════════════════════════
    CHART ENGINE — TradingView Lightweight Charts
 ══════════════════════════════════════════════ */
+/* ── PORTFOLIO SPARKLINE ── */
+let portHistory=[10000]; // track portfolio value over time
+let portSparkChart=null;
+
+function recordPortValue(){
+  const v=portVal();
+  portHistory.push(v);
+  if(portHistory.length>120) portHistory.shift();
+}
+setInterval(recordPortValue, 15000);
+
+function renderPortSparkline(){
+  const container=document.getElementById('port-sparkline');
+  if(!container||typeof LightweightCharts==='undefined') return;
+  if(portSparkChart){portSparkChart.remove();portSparkChart=null;}
+  portSparkChart=LightweightCharts.createChart(container,{
+    layout:{background:{color:'transparent'},textColor:'transparent'},
+    grid:{vertLines:{visible:false},horzLines:{visible:false}},
+    crosshair:{vertLine:{visible:false},horzLine:{visible:false}},
+    rightPriceScale:{visible:false},
+    leftPriceScale:{visible:false},
+    timeScale:{visible:false},
+    handleScroll:false,handleScale:false,
+    width:container.clientWidth||300,height:52,
+  });
+  const pnl=portHistory[portHistory.length-1]-portHistory[0];
+  const color=pnl>=0?'#22c55e':'#ef4444';
+  const series=portSparkChart.addAreaSeries({
+    lineColor:color,topColor:color.replace(')',' / 0.25)').replace('rgb','rgba'),
+    bottomColor:'transparent',lineWidth:2,priceLineVisible:false,lastValueVisible:false,
+  });
+  const now=Math.floor(Date.now()/1000);
+  const data=portHistory.map((v,i)=>({time:now-(portHistory.length-1-i)*15,value:v}));
+  series.setData(data);
+}
+
 let chartSym='BTC', chartPrevScreen='feed', chartRange=1;
 let lwChart=null, candleSeries=null, chartResizeObs=null;
 
