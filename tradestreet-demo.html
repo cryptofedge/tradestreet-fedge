@@ -1199,7 +1199,9 @@ function checkHoldMission(){
 function xpGain(amt){G.xp+=amt;toast('+'+amt+' XP');}
 function toast(msg){
   const t=document.getElementById('xp-toast');
-  t.querySelector('.toast-text').textContent=msg;
+  if(!t) return;
+  const ts=t.querySelector('.toast-text');
+  if(ts) ts.textContent=msg; else t.textContent=msg;
   t.classList.add('show'); clearTimeout(t._to);
   t._to=setTimeout(()=>t.classList.remove('show'),2500);
 }
